@@ -1,0 +1,178 @@
+eco "# -PAP-.github.io" >> README.md
+git init
+git adicionar README.md
+git commit -m "primeiro commit"
+git branch -M principal
+git remoto adicionar origem https://github.com/josemauricio6376-prog/-PAP-.github.io.git
+git push -u origem principal
+
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controle de Despesas</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>Controle de Despesas Pessoais</h1>
+
+        <div class="form-container">
+            <h2>Adicionar Receita/Despesa</h2>
+            <form id="form">
+                <input type="text" id="descricao" placeholder="Descrição" required>
+                <input type="number" id="valor" placeholder="Valor" required>
+                <select id="tipo">
+                    <option value="receita">Receita</option>
+                    <option value="despesa">Despesa</option>
+                </select>
+                <button type="submit">Adicionar</button>
+            </form>
+        </div>
+
+        <div class="tabela-container">
+            <h2>Entradas</h2>
+            <table id="tabela">
+                <thead>
+                    <tr>
+                        <th>Descrição</th>
+                        <th>Valor</th>
+                        <th>Tipo</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="graficos-container">
+            <h2>Gráficos</h2>
+            <canvas id="graficoPizza"></canvas>
+            <canvas id="graficoBarra"></canvas>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    margin: 0;
+    padding: 0;
+}
+
+.container {
+    width: 90%;
+    max-width: 800px;
+    margin: 20px auto;
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+h1, h2 {
+    text-align: center;
+}
+
+form {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+form input, form select {
+    flex: 1;
+    margin: 0 5px;
+    padding: 8px;
+}
+
+form button {
+    padding: 8px 12px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+}
+
+table, th, td {
+    border: 1px solid #ccc;
+}
+
+th, td {
+    padding: 8px;
+    text-align: center;
+}
+
+const form = document.getElementById('form');
+const tabela = document.getElementById('tabela').getElementsByTagName('tbody')[0];
+
+let entradas = JSON.parse(localStorage.getItem('entradas')) || [];
+
+function atualizarTabela() {
+    tabela.innerHTML = '';
+    entradas.forEach((entrada, index) => {
+        const row = tabela.insertRow();
+        row.insertCell(0).innerText = entrada.descricao;
+        row.insertCell(1).innerText = entrada.valor.toFixed(2);
+        row.insertCell(2).innerText = entrada.tipo;
+    });
+}
+
+function atualizarGraficos() {
+    const ctxPizza = document.getElementById('graficoPizza').getContext('2d');
+    const ctxBarra = document.getElementById('graficoBarra').getContext('2d');
+
+    const totalReceitas = entradas.filter(e => e.tipo === 'receita').reduce((acc, e) => acc + e.valor, 0);
+    const totalDespesas = entradas.filter(e => e.tipo === 'despesa').reduce((acc, e) => acc + e.valor, 0);
+
+    if(window.pizzaChart) window.pizzaChart.destroy();
+    if(window.barraChart) window.barraChart.destroy();
+
+    window.pizzaChart = new Chart(ctxPizza, {
+        type: 'pie',
+        data: {
+            labels: ['Receitas', 'Despesas'],
+            datasets: [{
+                data: [totalReceitas, totalDespesas],
+                backgroundColor: ['#4caf50', '#f44336']
+            }]
+        }
+    });
+
+    window.barraChart = new Chart(ctxBarra, {
+        type: 'bar',
+        data: {
+            labels: ['Receitas', 'Despesas'],
+            datasets: [{
+                label: 'Valor',
+                data: [totalReceitas, totalDespesas],
+                backgroundColor: ['#4caf50', '#f44336']
+            }]
+        }
+    });
+}
+
+form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const descricao = document.getElementById('descricao').value;
+    const valor = parseFloat(document.getElementById('valor').value);
+    const tipo = document.getElementById('tipo').value;
+
+    entradas.push({descricao, valor, tipo});
+    localStorage.setItem('entradas', JSON.stringify(entradas));
+
+    form.reset();
+    atualizarTabela();
+    atualizarGraficos();
+});
+
+// Inicializa
+atualizarTabela();
+atualizarGraficos();
